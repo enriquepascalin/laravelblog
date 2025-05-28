@@ -2,6 +2,11 @@
 
 return [
     'default' => 'default',
+    'info' => [
+        'title' => 'Blog API',
+        'version' => '1.0.0',
+        'description' => 'API for managing blog posts',
+    ],
     'documentations' => [
         'default' => [
             'api' => [
