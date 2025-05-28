@@ -26,9 +26,12 @@ class CommentController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
-    {
-        //
+    public function store(Request $request, Post $post) {
+        $validated = $request->validate([
+            'content' => 'required',
+            'user_id' => 'required|exists:users,id'
+        ]);
+        return $post->comments()->create($validated);
     }
 
     /**
@@ -58,8 +61,8 @@ class CommentController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Comment $comment)
-    {
-        //
+    public function destroy(Comment $comment) {
+        $comment->delete();
+        return response()->noContent();
     }
 }
