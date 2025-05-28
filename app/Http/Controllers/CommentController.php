@@ -3,66 +3,59 @@
 namespace App\Http\Controllers;
 
 use App\Models\Comment;
+use App\Models\Post;
 use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class CommentController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * Store a newly created comment in storage.
+     *
+     * @param Request $request
+     * @param int $postId
+     * @return JsonResponse
      */
-    public function index()
+    public function store(Request $request, int $postId): JsonResponse
     {
-        //
+        try {
+            $post = Post::findOrFail($postId);
+            
+            $validated = $request->validate([
+                'content' => 'required|string',
+                'user_id' => 'required|integer|exists:users,id'
+            ]);
+            
+            $comment = $post->comments()->create($validated);
+            return response()->json($comment, 201);
+            
+        } catch (ModelNotFoundException $e) {
+            return response()->json(['error' => 'Post not found'], 404);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json(['errors' => $e->errors()], 422);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Server error'], 500);
+        }
     }
 
     /**
-     * Show the form for creating a new resource.
+     * Remove the specified comment from storage.
+     *
+     * @param int $id
+     * @return JsonResponse
      */
-    public function create()
+    public function destroy(int $id): JsonResponse
     {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request, Post $post) {
-        $validated = $request->validate([
-            'content' => 'required',
-            'user_id' => 'required|exists:users,id'
-        ]);
-        return $post->comments()->create($validated);
-    }
-
-    /**
-     * Display the specified resource.
-     */
-    public function show(Comment $comment)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Comment $comment)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Comment $comment)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Comment $comment) {
-        $comment->delete();
-        return response()->noContent();
+        try {
+            $comment = Comment::findOrFail($id);
+            $comment->delete();
+            return response()->json(null, 204);
+            
+        } catch (ModelNotFoundException $e) {
+            return response()->json(['error' => 'Comment not found'], 404);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Server error'], 500);
+        }
     }
 }
